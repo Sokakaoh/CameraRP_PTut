@@ -1,69 +1,58 @@
 #include "client_server.h"
 
 int sendImage(const char *fileName, const char *serverPortString, const char *address) {
-    const int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == -1) {
-        close(sock);
-        fprintf(stderr, "Erreur d'ouverture de la socket.\n");
+    struct sockaddr_in remote_addr;
+    memset(&remote_addr, 0, sizeof(remote_addr));
+    remote_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, address, &(remote_addr.sin_addr));
+    remote_addr.sin_port = htons((uint16_t) strtol(serverPortString, NULL, 10));
+
+    int client_socket;
+    if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        fprintf(stderr, "Erreur création socket\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
 
-    struct sockaddr_in sock_s;
-    sock_s.sin_family = AF_INET;
-    sock_s.sin_addr.s_addr = inet_addr(address);
-    sock_s.sin_port = htons((const uint16_t) strtol(serverPortString, NULL, 10));
-    if (sock_s.sin_port < MIN_PORT || sock_s.sin_port > MAX_PORT) {
-        close(sock);
-        fprintf(stderr, "Le port doit être compris entre %d et %d.\n", MIN_PORT, MAX_PORT);
+    if (connect(client_socket, (struct sockaddr *) &remote_addr, sizeof(struct sockaddr)) == -1) {
+        fprintf(stderr, "Erreur connect\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
 
-    FILE *image = fopen(fileName, "r");
-    if (fseek(image, 0, SEEK_END) != 0) {
-        close(sock);
-        fclose(image);
-        fprintf(stderr, "Erreur d'ouverture de l'image.\n");
+    int image;
+    if ((image = open(fileName, O_RDONLY)) == -1) {
+        fprintf(stderr, "Erreur ouverture image\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
 
-    size_t imageLength = (size_t) ftell(image);
-    rewind(image);
-    char *buffer = malloc(imageLength * sizeof(char));
-    if (!fread(buffer, imageLength, 1, image)) {
-        free(buffer);
-        close(sock);
-        fclose(image);
-        fprintf(stderr, "Erreur création du buffer.\n");
-        return EXIT_FAILURE;
-    }
-    fclose(image);
-
-    if (sendto(sock, &imageLength, sizeof(size_t), 0, (const struct sockaddr *) &sock_s, sizeof(sock_s)) == -1) {
-        free(buffer);
-        close(sock);
-        fprintf(stderr, "Erreur d'envoi de la taille.\n");
+    struct stat file_stat;
+    if (fstat(image, &file_stat) < 0) {
+        fprintf(stderr, "Erreur fstat\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
 
-    for (size_t i = 0; i <= imageLength; i += MAX_BUFFER) {
-        char *subbuff = malloc(MAX_BUFFER * sizeof(char));
-        memcpy(subbuff, buffer, i);
-        if (sendto(sock, subbuff, MAX_BUFFER, 0, (const struct sockaddr *) &sock_s, sizeof(sock_s)) == -1) {
-            free(subbuff);
-            free(buffer);
-            close(sock);
-            fprintf(stderr, "Erreur d'envoi.\n");
-            return EXIT_FAILURE;
-        }
-        /*
-         * Problème :
-         *     – « double free or corruption » si « free(subbuff) » non commenté ;
-         *     – « Process finished with exit code 139 (interrupted by signal 11: SIGSEGV) » si « free(subbuff) » commenté
-         */
-        free(subbuff);
+    socklen_t sock_len = sizeof(struct sockaddr_in);
+    int peer_socket;
+    struct sockaddr_in peer_addr;
+    if ((peer_socket = accept(client_socket, (struct sockaddr *) &peer_addr, &sock_len)) == -1) {
+        fprintf(stderr, "Erreur accept\n%s\n", strerror(errno));
+        return EXIT_FAILURE;
     }
 
-    free(buffer);
-    close(sock);
+    char file_size[256];
+    sprintf(file_size, "%li", file_stat.st_size);
+    if (send(peer_socket, file_size, sizeof(file_size), 0) < 0) {
+        fprintf(stderr, "Erreur envoi taille\n%s\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    off_t offset = 0;
+    off_t remain_data = file_stat.st_size;
+    ssize_t sent_bytes;
+    while (((sent_bytes = sendfile(peer_socket, image, &offset, BUFSIZ)) > 0) && (remain_data > 0))
+        remain_data -= sent_bytes;
+
+    close(peer_socket);
+    close(client_socket);
+
     return EXIT_SUCCESS;
 }
