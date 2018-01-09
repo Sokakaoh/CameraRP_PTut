@@ -38,11 +38,11 @@ int receiveImage(const char *destRep, const char *serverPortString, const char *
     const time_t currentTime = time(NULL);
     char currentTimeString[SIZE_OF_TIME_STRING];
     strftime(currentTimeString, SIZE_OF_TIME_STRING, "%d-%m-%Y_%H-%M-%S", localtime(&currentTime));
-    char *imageName = malloc((strlen(destRep) + strlen(currentTimeString) + 6) * sizeof(char));
+    char *imageName = malloc((strlen(destRep) + strlen(currentTimeString) + 8) * sizeof(char));
     strcpy(imageName, destRep);
-    strcpy(imageName, "/");
-    strcpy(imageName, currentTimeString);
-    if ((received_file = fopen(strcpy(imageName, ".jpg"), "w")) == NULL) {
+    strcat(imageName, "/");
+    strcat(imageName, currentTimeString);
+    if ((received_file = fopen(strcat(imageName, ".jpg"), "w+")) == NULL) {
         fprintf(stderr, "Erreur ouverture image %s\n%s\n", imageName, strerror(errno));
         return EXIT_FAILURE;
     }
