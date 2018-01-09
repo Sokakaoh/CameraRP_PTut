@@ -1,6 +1,6 @@
 #include "client_server.h"
 
-int receiveImage(const char *serverPortString, const char *address) {
+int receiveImage(const char *destRep, const char *serverPortString, const char *address) {
     int server_socket;
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf(stderr, "Erreur création socket\n%s\n", strerror(errno));
@@ -23,10 +23,10 @@ int receiveImage(const char *serverPortString, const char *address) {
         return EXIT_FAILURE;
     }
 
-    socklen_t socklen = sizeof(struct sockaddr_in);
+    const socklen_t socklen = sizeof(struct sockaddr_in);
     int client_socket;
     struct sockaddr_in client_addr;
-    if ((client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &socklen)) == -1) {
+    if ((client_socket = accept(server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &socklen)) == -1) {
         fprintf(stderr, "Erreur accept\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
@@ -35,14 +35,18 @@ int receiveImage(const char *serverPortString, const char *address) {
     recv(client_socket, buffer, BUFSIZ, 0);
 
     FILE *received_file = NULL;
-    time_t currentTime = time(NULL);
-    char *currentTimeString = ctime(&currentTime);
-    char *imageName = malloc((strlen(currentTimeString) + 4) * sizeof(char));
-    strcat(imageName, currentTimeString);
-    if ((received_file = fopen(strcat(imageName, ".jpg"), "w")) == NULL) {
-        fprintf(stderr, "Erreur ouverture image\n%s\n", strerror(errno));
+    const time_t currentTime = time(NULL);
+    char currentTimeString[SIZE_OF_TIME_STRING];
+    strftime(currentTimeString, SIZE_OF_TIME_STRING, "%d-%m-%Y_%H-%M-%S", localtime(&currentTime));
+    char *imageName = malloc((strlen(destRep) + strlen(currentTimeString) + 6) * sizeof(char));
+    strcpy(imageName, destRep);
+    strcpy(imageName, "/");
+    strcpy(imageName, currentTimeString);
+    if ((received_file = fopen(strcpy(imageName, ".jpg"), "w")) == NULL) {
+        fprintf(stderr, "Erreur ouverture image %s\n%s\n", imageName, strerror(errno));
         return EXIT_FAILURE;
     }
+    free(imageName);
 
     ssize_t len;
     long remain_data = strtol(buffer, NULL, 10);

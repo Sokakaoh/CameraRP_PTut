@@ -15,6 +15,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#define SIZE_OF_TIME_STRING 20
+
 /**
  * Envoi une image à un serveur
  * @param fileName chemin de l'image
@@ -26,10 +28,11 @@ int sendImage(const char *fileName, const char *serverPortString, const char *ad
 
 /**
  * Reçoit une image
+ * @param destRep Répertoire de destination
  * @param serverPortString port du serveur
  * @param address adresse du serveur
  * @return EXIT_SUCCESS si la réception a réussi ; EXIT_FAILURE si elle a échoué
  */
-int receiveImage(const char *serverPortString, const char *address);
+int receiveImage(const char *destRep, const char *serverPortString, const char *address);
 
 #endif //ENVOIDIMAGECLIENTSERVEUR_CLIENT_SERVER_H
