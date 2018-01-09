@@ -23,8 +23,16 @@ int receiveImage(const char *serverPortString, const char *address) {
         return EXIT_FAILURE;
     }
 
+    socklen_t socklen = sizeof(struct sockaddr_in);
+    int client_socket;
+    struct sockaddr_in client_addr;
+    if ((client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &socklen)) == -1) {
+        fprintf(stderr, "Erreur accept\n%s\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
+
     char buffer[BUFSIZ];
-    while (recv(server_socket, buffer, BUFSIZ, 0) == -1);
+    recv(client_socket, buffer, BUFSIZ, 0);
 
     FILE *received_file = NULL;
     time_t currentTime = time(NULL);
@@ -38,12 +46,13 @@ int receiveImage(const char *serverPortString, const char *address) {
 
     ssize_t len;
     long remain_data = strtol(buffer, NULL, 10);
-    while (((len = recv(server_socket, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0)) {
+    while (((len = recv(client_socket, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0)) {
         fwrite(buffer, sizeof(char), (size_t) len, received_file);
         remain_data -= len;
     }
 
     fclose(received_file);
+    close(client_socket);
     close(server_socket);
 
     return 0;
