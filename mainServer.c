@@ -6,5 +6,5 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    return receiveImage(argv[1], argv[2]);
+    receiveImage(argv[1], argv[2]);
 }

@@ -24,7 +24,7 @@ int receiveImage(const char *serverPortString, const char *address) {
     }
 
     char buffer[BUFSIZ];
-    recv(server_socket, buffer, BUFSIZ, 0);
+    while (recv(server_socket, buffer, BUFSIZ, 0) == -1);
 
     FILE *received_file = NULL;
     time_t currentTime = time(NULL);
