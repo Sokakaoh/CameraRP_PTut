@@ -18,13 +18,20 @@
 #define SIZE_OF_TIME_STRING 20
 
 /**
- * Envoi une image à un serveur
- * @param fileName chemin de l'image
  * @param serverPortString port du serveur
  * @param address adresse du serveur
+ * @return socket du client créé
+ */
+int createClient(const char *serverPortString, const char *address);
+
+/**
+ * Envoi une image à un serveur
+ * @param size taille du tableau
+ * @param imageArray image en tableau de char
+ * @param client_socket socket du client
  * @return EXIT_SUCCESS si l'envoi a réussi ; EXIT_FAILURE s'il a échoué
  */
-int sendImage(const char *fileName, const char *serverPortString, const char *address);
+int sendImage(long size, const char *imageArray, int client_socket);
 
 /**
  * @param serverPortString port du serveur

@@ -4,7 +4,7 @@ int createServer(const char *serverPortString, const char *address) {
     int server_socket;
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf(stderr, "Erreur création socket\n%s\n", strerror(errno));
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in server_addr;
@@ -14,14 +14,18 @@ int createServer(const char *serverPortString, const char *address) {
     server_addr.sin_port = htons((uint16_t) strtol(serverPortString, NULL, 10));
 
     if ((bind(server_socket, (struct sockaddr *) &server_addr, sizeof(struct sockaddr))) == -1) {
+        close(server_socket);
         fprintf(stderr, "Erreur bind\n%s\n", strerror(errno));
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     if ((listen(server_socket, 5)) == -1) {
+        close(server_socket);
         fprintf(stderr, "Erreur listen\n%s\n", strerror(errno));
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
+
+    return server_socket;
 }
 
 int receiveImage(const char *destRep, const int server_socket) {
@@ -45,6 +49,7 @@ int receiveImage(const char *destRep, const int server_socket) {
     strcat(imageName, "/");
     strcat(imageName, currentTimeString);
     if ((received_file = fopen(strcat(imageName, ".jpg"), "w+")) == NULL) {
+        fclose(received_file);
         fprintf(stderr, "Erreur ouverture image %s\n%s\n", imageName, strerror(errno));
         return EXIT_FAILURE;
     }
@@ -58,6 +63,5 @@ int receiveImage(const char *destRep, const int server_socket) {
     }
 
     fclose(received_file);
-    close(client_socket);
     return EXIT_SUCCESS;
 }
