@@ -59,7 +59,5 @@ int receiveImage(const char *destRep, const int server_socket) {
 
     fclose(received_file);
     close(client_socket);
-    close(server_socket);
-
-    return 0;
+    return EXIT_SUCCESS;
 }
