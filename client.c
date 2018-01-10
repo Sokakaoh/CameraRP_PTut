@@ -32,14 +32,11 @@ int sendImage(const long size, const char *imageArray, const int client_socket) 
     }
     free(sizeString);
 
-    int index = 0;
-    while (index < size) {
-        if (send(client_socket, &(imageArray[index]), BUFSIZ, NULL) < 0) {
+    for (int i = 0; i < size; i += BUFSIZ)
+        if (send(client_socket, &imageArray[i], BUFSIZ, NULL) < 0) {
             fprintf(stderr, "Erreur envoi tableau\n%s\n", strerror(errno));
             return EXIT_FAILURE;
         }
-        index += BUFSIZ;
-    }
 
     return EXIT_SUCCESS;
 }
