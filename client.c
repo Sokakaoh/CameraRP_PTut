@@ -22,7 +22,7 @@ int createClient(const char *serverPortString, const char *address) {
     return client_socket;
 }
 
-int sendImage(const long size, const char *imageArray, const int client_socket) {
+int sendImage(const long size, const unsigned char *imageArray, const int client_socket) {
     char *sizeString = malloc(sizeof(int));
     sprintf(sizeString, "%li", size);
     if (send(client_socket, sizeString, sizeof(size), NULL) < 0) {

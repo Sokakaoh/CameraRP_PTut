@@ -37,8 +37,8 @@ int receiveImage(const char *destRep, const int server_socket) {
         return EXIT_FAILURE;
     }
 
-    char buffer[BUFSIZ];
-    recv(client_socket, buffer, BUFSIZ, 0);
+    char imageLength[BUFSIZ];
+    recv(client_socket, imageLength, BUFSIZ, 0);
 
     FILE *received_file = NULL;
     const time_t currentTime = time(NULL);
@@ -56,7 +56,8 @@ int receiveImage(const char *destRep, const int server_socket) {
     free(imageName);
 
     ssize_t len;
-    long remain_data = strtol(buffer, NULL, 10);
+    long remain_data = strtol(imageLength, NULL, 10);
+    unsigned char buffer[BUFSIZ];
     while (((len = recv(client_socket, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0)) {
         fwrite(buffer, sizeof(char), (size_t) len, received_file);
         remain_data -= len;

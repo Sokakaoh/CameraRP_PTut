@@ -31,7 +31,7 @@ int createClient(const char *serverPortString, const char *address);
  * @param client_socket socket du client
  * @return EXIT_SUCCESS si l'envoi a réussi ; EXIT_FAILURE s'il a échoué
  */
-int sendImage(long size, const char *imageArray, int client_socket);
+int sendImage(long size, const unsigned char *imageArray, int client_socket);
 
 /**
  * @param serverPortString port du serveur
