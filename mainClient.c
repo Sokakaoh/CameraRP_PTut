@@ -8,17 +8,15 @@ int main(int argc, char **argv) {
 
     int client_socket = createClient(argv[1], argv[2]);
 
-    FILE *image = fopen("assets/src/imageTest.jpg", "r");
-
-    fseek(image, 0L, SEEK_END);
-    size_t imageSize = (size_t) ftell(image);
-    rewind(image);
-
-    char *buffer = calloc(1, imageSize + 1);
-    fread(buffer, imageSize, 1, image);
+    char *filename = "assets/src/imageTest.jpg";
+    FILE *image = fopen(filename, "r");
+    struct stat imageSize;
+    stat(filename, &imageSize);
+    char *buffer = malloc(imageSize.st_size * sizeof(char));
+    fread(buffer, (size_t) imageSize.st_size, sizeof(char), image);
     fclose(image);
 
-    int retour = sendImage((int) imageSize, buffer, client_socket);
+    int retour = sendImage(imageSize.st_size, buffer, client_socket);
 
     free(buffer);
     close(client_socket);
