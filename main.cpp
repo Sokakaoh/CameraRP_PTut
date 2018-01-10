@@ -1,6 +1,13 @@
 /*
  * main.cpp
  *
+ *  Created on: 10 Jan 2018
+ *      Author: pi
+ */
+
+/*
+ * main.cpp
+ *
  *  Created on: 27 déc. 2017
  *      Author: root
  */
@@ -13,6 +20,8 @@
 #include <stdlib.h>
 #include <opencv2/videoio.hpp>
 #include <opencv2/video.hpp>
+
+#include "client_serveur.h"
 
 using namespace cv;
 using namespace std;
@@ -78,8 +87,9 @@ Mat compare_contours(Mat image, Mat image2)
 
 int main(int, char** argv) {
 
-
 	printf("Lancement programme.\n");
+
+	//int socket = createClient("7000", "127.0.0.1");
 
 	Mat image;
 	VideoCapture camera(0);
@@ -103,13 +113,13 @@ int main(int, char** argv) {
 				cvtColor(tab[1], gray2, COLOR_BGR2GRAY);
 
 				diff = compare_contours(gray, gray2);
-				diff2 = compare_pix(gray, gray2);
+				//diff2 = compare_pix(gray, gray2);
 
-				unsigned char* data_char = tab[1].data;
+				//unsigned char* data_char = tab[1].data;
 
-				//printf("Pourcentage différences : %lf\n", norm(diff, NORM_L2, noArray()));/*100-(countNonZero(diff)*100 / (diff.cols*diff.rows)*/
-				//namedWindow("Test", WINDOW_AUTOSIZE);
-				//imshow("Test", diff);*/
+				printf("Pourcentage différences : %lf\n", norm(diff, NORM_L2, noArray()));//100-(countNonZero(diff)*100 /  (diff.cols*diff.rows)
+				namedWindow("Test", WINDOW_AUTOSIZE);
+				imshow("Test", diff);
 
 			}
 
@@ -119,8 +129,11 @@ int main(int, char** argv) {
 		camera.release();
 	}
 	else
-		printf("Lecture caméra impossible.\n");
+		printf("Lecture camera impossible.\n");
 
 	return (0);
 }
+
+
+
 
