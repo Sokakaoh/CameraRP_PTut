@@ -6,5 +6,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    return receiveImage(argv[1], argv[2], argv[3]);
+    int server = createServer(argv[2], argv[3]);
+    while (1)
+        receiveImage(argv[1], server);
 }

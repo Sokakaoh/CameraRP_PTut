@@ -27,12 +27,18 @@
 int sendImage(const char *fileName, const char *serverPortString, const char *address);
 
 /**
+ * @param serverPortString port du serveur
+ * @param address addresse du serveur en IPv4
+ * @return socket du serveur créé
+ */
+int createServer(const char *serverPortString, const char *address);
+
+/**
  * Reçoit une image
  * @param destRep Répertoire de destination
- * @param serverPortString port du serveur
- * @param address adresse du serveur
+ * @param server_socket socket du serveur
  * @return EXIT_SUCCESS si la réception a réussi ; EXIT_FAILURE si elle a échoué
  */
-int receiveImage(const char *destRep, const char *serverPortString, const char *address);
+int receiveImage(const char *destRep, int server_socket);
 
 #endif //ENVOIDIMAGECLIENTSERVEUR_CLIENT_SERVER_H

@@ -1,6 +1,6 @@
 #include "client_server.h"
 
-int receiveImage(const char *destRep, const char *serverPortString, const char *address) {
+int createServer(const char *serverPortString, const char *address) {
     int server_socket;
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf(stderr, "Erreur création socket\n%s\n", strerror(errno));
@@ -22,7 +22,9 @@ int receiveImage(const char *destRep, const char *serverPortString, const char *
         fprintf(stderr, "Erreur listen\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
+}
 
+int receiveImage(const char *destRep, const int server_socket) {
     const socklen_t socklen = sizeof(struct sockaddr_in);
     int client_socket;
     struct sockaddr_in client_addr;
