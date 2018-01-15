@@ -21,7 +21,99 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/video.hpp>
 
-#include "client_serveur.h"
+//#include "client_server.h"
+
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/sendfile.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+//#define SIZE_OF_TIME_STRING 20
+
+/**
+ * @param serverPortString port du serveur
+ * @param address adresse du serveur
+ * @return socket du client créé
+ */
+int createClient(const char *serverPortString, const char *address);
+
+/**
+ * Envoi une image à un serveur
+ * @param size taille du tableau
+ * @param imageArray image en tableau de char
+ * @param client_socket socket du client
+ * @return EXIT_SUCCESS si l'envoi a réussi ; EXIT_FAILURE s'il a échoué
+ */
+int sendImage(long size, const unsigned char *imageArray, int client_socket);
+
+/**
+ * @param serverPortString port du serveur
+ * @param address addresse du serveur en IPv4
+ * @return socket du serveur créé
+ */
+int createServer(const char *serverPortString, const char *address);
+
+/**
+ * Reçoit une image
+ * @param destRep Répertoire de destination
+ * @param server_socket socket du serveur
+ * @return EXIT_SUCCESS si la réception a réussi ; EXIT_FAILURE si elle a échoué
+ */
+int receiveImage(const char *destRep, int server_socket);
+
+int createClient(const char *serverPortString, const char *address) {
+    struct sockaddr_in remote_addr;
+    memset(&remote_addr, 0, sizeof(remote_addr));
+    remote_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, address, &(remote_addr.sin_addr));
+    remote_addr.sin_port = htons((uint16_t) strtol(serverPortString, NULL, 10));
+
+    int client_socket;
+    if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        fprintf(stderr, "Erreur création socket\n%s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    if (connect(client_socket, (struct sockaddr *) &remote_addr, sizeof(struct sockaddr)) == -1) {
+        close(client_socket);
+        fprintf(stderr, "Erreur connect\n%s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    return client_socket;
+}
+
+int sendImage(const long size, const unsigned char *imageArray, const int client_socket) {
+    unsigned char *sizeString = (unsigned char*) malloc(sizeof(int));
+    sprintf((char *)sizeString, "%li", size);
+
+    if (send(client_socket, sizeString, strlen((char *)sizeString), NULL) < 0) {
+        free(sizeString);
+        fprintf(stderr, "Erreur envoi taille\n%s\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
+    free(sizeString);
+
+    for (int i = 0; i < size; i += BUFSIZ)
+    {
+        if (send(client_socket, &imageArray[i], BUFSIZ, NULL) < 0) {
+            fprintf(stderr, "Erreur envoi tableau\n%s\n", strerror(errno));
+            return EXIT_FAILURE;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
 
 using namespace cv;
 using namespace std;
@@ -83,31 +175,29 @@ Mat compare_contours(Mat image, Mat image2)
   return diff;
 }
 
-
-
 int main(int, char** argv) {
 
 	printf("Lancement programme.\n");
 
-	//int socket = createClient("7000", "127.0.0.1");
+	int socket_envoi = createClient("7000", "127.0.0.1");
 
 	Mat image;
 	VideoCapture camera(0);
+	camera.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+	camera.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 
 	//Varialbes pour test
 	Mat tab[2];// images stocker par la caméra
 	Mat gray, gray2;//images en niveau de gris
 	Mat diff, diff2;
-	//camera.read(tab[1]);
-	//camera.read(tab[2]);
 
 	if (camera.isOpened()) {
 		while (true) {
-			if (camera.read(image)) {
+			if (camera.read(tab[0])) {
 
 				printf("Lecture caméra.\n");
 
-				camera.read(tab[0]);
+				//camera.read(tab[0]);
 				camera.read(tab[1]);
 				cvtColor(tab[0], gray, COLOR_BGR2GRAY);
 				cvtColor(tab[1], gray2, COLOR_BGR2GRAY);
@@ -115,15 +205,25 @@ int main(int, char** argv) {
 				diff = compare_contours(gray, gray2);
 				//diff2 = compare_pix(gray, gray2);
 
-				//unsigned char* data_char = tab[1].data;
+				//printf("taille supposé : %d\n", tab[0].cols * tab[0].rows * 3);
+				unsigned char* img = tab[0].data;
 
-				printf("Pourcentage différences : %lf\n", norm(diff, NORM_L2, noArray()));//100-(countNonZero(diff)*100 /  (diff.cols*diff.rows)
-				namedWindow("Test", WINDOW_AUTOSIZE);
-				imshow("Test", diff);
+				if( (100-(countNonZero(diff)*100 /  (diff.cols*diff.rows))) > 4)
+				{
+					sendImage(tab[0].cols * tab[0].rows * 3, img, socket_envoi);
+					printf("Envoi image..\n");
+				}
+
+
+
+				printf("Pourcentage différences : %d\n", 100-(countNonZero(diff)*100 /  (diff.cols*diff.rows) ));//norm(diff, NORM_L2, noArray()
+
+				//namedWindow("Test", WINDOW_AUTOSIZE);
+				//imshow("Test", diff);
 
 			}
 
-			waitKey(20);
+			//waitKey(100);
 		}
 
 		camera.release();
