@@ -4,8 +4,6 @@
  *  Created on: 10 janv. 2018
  *      Author: pi
  */
-
-
 #include "client_server.h"
 
 int createServer(const char *serverPortString, const char *address) {
@@ -36,7 +34,7 @@ int createServer(const char *serverPortString, const char *address) {
     return server_socket;
 }
 
-int receiveImage(const char *destRep, const int server_socket) {
+int acceptClient(const int server_socket) {
     const socklen_t socklen = sizeof(struct sockaddr_in);
     int client_socket;
     struct sockaddr_in client_addr;
@@ -44,11 +42,13 @@ int receiveImage(const char *destRep, const int server_socket) {
         fprintf(stderr, "Erreur accept\n%s\n", strerror(errno));
         return EXIT_FAILURE;
     }
+    return client_socket;
+}
 
+int receiveImage(const char *destRep, const int client_socket) {
     char imageLength[BUFSIZ];
-    recv(client_socket, imageLength, BUFSIZ, 0);
+    while (recv(client_socket, imageLength, BUFSIZ, 0) == 0);
 
-    //FILE *received_file = NULL;
     const time_t currentTime = time(NULL);
     char currentTimeString[SIZE_OF_TIME_STRING];
     strftime(currentTimeString, SIZE_OF_TIME_STRING, "%d-%m-%Y_%H-%M-%S", localtime(&currentTime));
@@ -57,12 +57,6 @@ int receiveImage(const char *destRep, const int server_socket) {
     strcat(imageName, "/");
     strcat(imageName, currentTimeString);
     strcat(imageName, ".jpg");
-    /*if ((received_file = fopen(strcat(imageName, ".jpg"), "w+")) == NULL) {
-        fclose(received_file);
-        fprintf(stderr, "Erreur ouverture image %s\n%s\n", imageName, strerror(errno));
-        return EXIT_FAILURE;
-    }*/
-
 
     ssize_t len;
     long remain_data = strtol(imageLength, NULL, 10);
@@ -71,40 +65,24 @@ int receiveImage(const char *destRep, const int server_socket) {
     //Ecriture image
     const int WIDTH = 640, HEIGHT = 480;
     IplImage *retour = cvCreateImage(cvSize(WIDTH, HEIGHT), IPL_DEPTH_8U, 3);
-    uchar *p = retour->imageData;
+    char *p = retour->imageData;
 
     int i = 0;
-
     while (((len = recv(client_socket, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0)) {
-
-    	if(i < WIDTH*HEIGHT*3 )
-    	{
-    		int longueur = 0;
-    		if(remain_data > len)
-    			longueur = len;
-    		else
-    			longueur = remain_data;
-
-    		for(int j=0; j < longueur; j++)
-    		{
-    			*p =  buffer[j];
-				++p;
-				++i;
-    		}
-    	}
-
-    	//fwrite(buffer, sizeof(char), (size_t) len, received_file);
+        if (i < WIDTH * HEIGHT * 3) {
+            ssize_t longueur = remain_data > len ? len : remain_data;
+            for (int j = 0; j < longueur; j++) {
+                *p = buffer[j];
+                ++p;
+                ++i;
+            }
+        }
         remain_data -= len;
-
     }
 
-    //cvNamedWindow("Test", CV_WINDOW_AUTOSIZE);
-    //cvShowImage("Test", retour);
-    //cvWaitKey(1000);
     cvSaveImage(imageName, retour, NULL);
     free(imageName);
     cvDestroyAllWindows();
     cvReleaseImage(&retour);
-    //fclose(received_file);
     return EXIT_SUCCESS;
 }
