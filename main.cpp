@@ -110,7 +110,8 @@ int sendImage(const long size, const unsigned char *imageArray, const int client
             return EXIT_FAILURE;
         }
     }
-
+	
+    send(client_socket, "end", 4, NULL);
     return EXIT_SUCCESS;
 }
 
