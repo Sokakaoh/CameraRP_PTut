@@ -46,8 +46,10 @@ int acceptClient(const int server_socket) {
 }
 
 int receiveImage(const char *destRep, const int client_socket) {
+    char end[4]
+    while (recv(client_socket, end, 4, 0) > 0 && end == "end");
     char imageLength[BUFSIZ];
-    while (recv(client_socket, imageLength, BUFSIZ, 0) == 0);
+    recv(client_socket, imageLength, BUFSIZ, 0;
 
     const time_t currentTime = time(NULL);
     char currentTimeString[SIZE_OF_TIME_STRING];
