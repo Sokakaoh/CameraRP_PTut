@@ -69,16 +69,17 @@ int receiveImage(const char *destRep, const int client_socket) {
     IplImage *retour = cvCreateImage(cvSize(WIDTH, HEIGHT), IPL_DEPTH_8U, 3);
     char *p = retour->imageData;
 
-    int i = 0;
+    // int i = 0;
     while (((len = recv(client_socket, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0)) {
-        if (i < WIDTH * HEIGHT * 3) {
+        /*if (i < WIDTH * HEIGHT * 3) {
             ssize_t longueur = remain_data > len ? len : remain_data;
             for (int j = 0; j < longueur; j++) {
                 *p = buffer[j];
                 ++p;
                 ++i;
             }
-        }
+        }*/
+        strcat(p, buffer);
         remain_data -= len;
     }
 
