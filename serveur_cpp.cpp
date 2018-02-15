@@ -15,6 +15,10 @@
 
 int main(int argc, char *argv[])
 {
+	unsigned int width = 0;
+	unsigned int height = 0;
+	char width_s[5], height_s[5];
+	bool reception = true;
 
 	//Déclarations variables
 
@@ -40,19 +44,28 @@ int main(int argc, char *argv[])
      create_socket(argc, argv, sock);
 
 
-     Mat  img = Mat::zeros( 480, 640 , CV_8UC3);
+     if( (recv(sock[1], (char *) width_s, sizeof (char) * 5, 0)) == -1 && (recv(sock[1], (char *) height_s, sizeof (char) * 5, 0)) == -1)
+    	 error("Erreur réception taille");
+     else
+    	 cout << "Réception taille : " << width_s << "x" << height_s << endl;
+
+
+     waitKey(10000);
+
+     Mat  img = Mat::zeros( height, width , CV_8UC3);
         int  imgSize = img.total()*img.elemSize();
         uchar sockData[imgSize];
         int bytes;
 
-     while(true) {
+     while(reception) {
 
       //Réception des images
 
         for (int i = 0; i < imgSize; i += bytes) {
         if ((bytes = recv(sock[1], sockData +i, imgSize  - i, 0)) == -1) {
           //quit("recv failed", 1);
-        	exit(0);
+        	reception = false;
+        	exit(1);
          }
         }
 
@@ -85,24 +98,19 @@ int main(int argc, char *argv[])
         strcat(imageName, ext_nom);
         strcat(imageName, ".jpg");
 
+        //On estime que la réception ne dépassera pas 30 fps
         if(image_id < 30)
         	image_id++;
         else
         	image_id = 0;
 
 
-       Mat img2(Size(640, 480), CV_8UC3, sockData);
+       Mat img2(Size(width, height), CV_8UC3, sockData);
 
        printf("Ecriture image : %s\n", imageName);
 
        imwrite(imageName, img2);
        free(imageName);
-
-       //namedWindow( "Server", CV_WINDOW_AUTOSIZE );// Create a window for display.
-       //imshow( "Server", img2 );
-       //waitKey(500);
-
-
 
       img2.release();
 
