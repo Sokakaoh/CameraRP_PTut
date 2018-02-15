@@ -17,7 +17,6 @@ int main(int argc, char *argv[])
 {
 	unsigned int width = 0;
 	unsigned int height = 0;
-	char width_s[5], height_s[5];
 	bool reception = true;
 
 	//Déclarations variables
@@ -44,13 +43,16 @@ int main(int argc, char *argv[])
      create_socket(argc, argv, sock);
 
 
-     if( (recv(sock[1], (char *) width_s, sizeof (char) * 5, 0)) == -1 && (recv(sock[1], (char *) height_s, sizeof (char) * 5, 0)) == -1)
+     if( (recv(sock[1], &width, sizeof(unsigned int), 0)) == -1)
     	 error("Erreur réception taille");
      else
-    	 cout << "Réception taille : " << width_s << "x" << height_s << endl;
+     {
+    	 if( (recv(sock[1], &height, sizeof(unsigned int), 0)) == -1)
+			error("Erreur réception taille");
+		else
+			cout << "Réception taille : " << width << "x" << height << endl;
+     }
 
-
-     waitKey(10000);
 
      Mat  img = Mat::zeros( height, width , CV_8UC3);
         int  imgSize = img.total()*img.elemSize();

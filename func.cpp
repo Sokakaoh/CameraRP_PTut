@@ -102,14 +102,18 @@ void createSocket(int argc, char *argv[] ,Conf* setRP )
 
     setRP->sock = sockfd;
 
-    char height_s[5], width_s[5];
-    sprintf(width_s, "%s", setRP->width);
-    sprintf(height_s, "%s", setRP->height);
 
-    if( send(setRP->sock, (char *) width_s, sizeof (char) * 5, 0 ) < 0 &&  send(setRP->sock, (char *) height_s, sizeof (char) * 5, 0 ) < 0)
-    	error("Erreur envoi taille");
+    if( send(setRP->sock, &setRP->width, sizeof (unsigned int), 0 ) < 0 )
+    		error("Erreur envoi taille");
     else
-    	cout <<"Envoi taille :" << setRP->width << "x" << setRP->height << endl;
+    {
+
+    	if( send(setRP->sock, &setRP->height, sizeof (unsigned int), 0 ) < 0 )
+    		error("Erreur envoi taille");
+    	else
+    		cout <<"Envoi taille :" << setRP->width << "x" << setRP->height << endl;
+    }
+
 
 
 
