@@ -18,12 +18,14 @@ Conf* menu(Conf* setRP)
 {
 	int numb = -1;
 
-	while(numb < 1 || numb > 2)
+	while(numb < 1 || numb > 3)
 	{
 		cout << "Configuration de la capture d'images :" << endl;
 		cout << "1. Modification taille image." << endl;
 		cout << "2. Démarrer capture." << endl;
+		cout << "3. Choix méthode de comparaison." << endl;
 
+		cin.clear();
 		cin >> numb;
 	}
 
@@ -33,6 +35,13 @@ Conf* menu(Conf* setRP)
 			setSize(setRP);
 			break;
 		case 2:
+			cout << "Lancement capture ('q' pour quitter)." << endl;
+			break;
+		case 3:
+			compChoice(setRP);
+			break;
+		default :
+			menu(setRP);
 			break;
 	}
 
@@ -70,6 +79,42 @@ void setSize(Conf* setRP)
 	menu(setRP);
 }
 
+void compChoice(Conf* setRP)
+{
+	int choix;
+
+	cout <<"Méthode de comparaison :"<< endl;
+	cout <<"1. Comparaison par pixels: Compare chaque pixel de deux images. (par défaut)" << endl;
+	cout <<"2. Comparaison par contours: Compare les contours (des formes) dans les images (en noir et blanc)." << endl;
+	cout <<"3. Comparaison par suppression de fond : Supprime les éléments statiques d'une image et détecte les changements." << endl;
+	cout <<"4. Retour menu principal." << endl;
+
+	cin >> choix;
+
+	switch(choix) {
+		case 1 :
+			setRP->comp_method = 1;
+			menu(setRP);
+			break;
+		case 2 :
+			setRP->comp_method = 1;
+			menu(setRP);
+			break;
+		case 3 :
+			setRP->comp_method = 1;
+			menu(setRP);
+			break;
+		case 4 :
+			menu(setRP);
+			break;
+		default :
+			compChoice(setRP);
+			break;
+
+	}
+
+}
+
 void createSocket(int argc, char *argv[] ,Conf* setRP )
 {
     int sockfd, portno;
@@ -86,7 +131,7 @@ void createSocket(int argc, char *argv[] ,Conf* setRP )
     if (sockfd < 0)
         error("ERREUR ouverture socket");
     server = gethostbyname(argv[1]);
-    //server = atoi(argv[1]);
+
     if (server == NULL) {
         fprintf(stderr,"ERREUR, hôte inconnu\n");
         exit(0);
@@ -102,22 +147,33 @@ void createSocket(int argc, char *argv[] ,Conf* setRP )
 
     setRP->sock = sockfd;
 
+}
 
-    if( send(setRP->sock, &setRP->width, sizeof (unsigned int), 0 ) < 0 )
-    		error("Erreur envoi taille");
-    else
-    {
+void sendParameters(Conf* setRP)
+{
+	int numReq = 1;
 
-    	if( send(setRP->sock, &setRP->height, sizeof (unsigned int), 0 ) < 0 )
-    		error("Erreur envoi taille");
-    	else
-    		cout <<"Envoi taille :" << setRP->width << "x" << setRP->height << endl;
-    }
+	if(send(setRP->sock, &numReq, sizeof ( int), 0 ) < 0)
+		error("Erreur envoi numéro requête paramètre");
+	else {
+		if( send(setRP->sock, &setRP->width, sizeof (unsigned int), 0 ) < 0 )
+			error("Erreur envoi taille");
+		else
+		{
 
+			if( send(setRP->sock, &setRP->height, sizeof (unsigned int), 0 ) < 0 )
+				error("Erreur envoi taille");
+			else
+				cout <<"Envoi taille :" << setRP->width << "x" << setRP->height << endl;
+		}
+	}
+}
 
-
-
-
+void sendInit(Conf* setRP)
+{
+	int init = -1;
+    if( send(setRP->sock, &init, sizeof (int), 0 ) < 0 )
+    		error("Erreur envoi initialisation");
 }
 
 Mat compare_contours(Mat image, Mat image2)
@@ -168,3 +224,11 @@ Mat compare_contours(Mat image, Mat image2)
 
   return diff;
 }
+
+/*void apply_bgs(Conf_bgs* bgs)
+{
+	bgs->pMOG2 = createBackgroundSubtractorMOG2();
+
+
+}
+*/

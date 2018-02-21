@@ -8,27 +8,26 @@
 
 
 #include "functions.hpp"
+#include <fcntl.h>
+#include <unistd.h>
+#include <csignal>
+#include <cstdlib>
 
-#include <time.h>
-#include <sys/stat.h>
-#include <dirent.h>
+
+bool co_accept = true;
+/*
+void sigHandler(int signal)
+{
+	co_accept = false;
+}*/
+
 
 int main(int argc, char *argv[])
 {
-	unsigned int width = 0;
-	unsigned int height = 0;
-	bool reception = true;
 
-	//Déclarations variables
+	 captureConf setCap;
 
-     int image_id = 0; // compteur pour différencier plusieurs images dans la même seconde
-     time_t currentTime;
-     char currentTimeString[SIZE_OF_TIME_STRING];
-     char subDir_name[SIZE_OF_TIME_STRING+4];
-     char ext_nom[4]; //char pour le compteur
-     int sock[2];
-     time_t temps = time(NULL);
-     bool first_rec = true;
+	 //signal(SIGINT, sigHandler);
 
      if(! opendir("dest") )
      {
@@ -40,87 +39,27 @@ int main(int argc, char *argv[])
 
      }
 
-     create_socket(argc, argv, sock);
+     create_socket(argc, argv, &setCap);
 
+     //int flags = fcntl(setCap.newsockfd, F_GETFL, 0);
 
-     if( (recv(sock[1], &width, sizeof(unsigned int), 0)) == -1)
-    	 error("Erreur réception taille");
-     else
+     while(co_accept)
      {
-    	 if( (recv(sock[1], &height, sizeof(unsigned int), 0)) == -1)
-			error("Erreur réception taille");
-		else
-			cout << "Réception taille : " << width << "x" << height << endl;
-     }
+    	 //fcntl(setCap.newsockfd, F_SETFL, flags | O_NONBLOCK);
+         setCap.newsockfd = accept(setCap.sockfd,
+                     (struct sockaddr *) &setCap.cli_addr,
+                     &setCap.clilen);
 
-
-     Mat  img = Mat::zeros( height, width , CV_8UC3);
-        int  imgSize = img.total()*img.elemSize();
-        uchar sockData[imgSize];
-        int bytes;
-
-     while(reception) {
-
-      //Réception des images
-
-        for (int i = 0; i < imgSize; i += bytes) {
-        if ((bytes = recv(sock[1], sockData +i, imgSize  - i, 0)) == -1) {
-          //quit("recv failed", 1);
-        	reception = false;
-        	exit(1);
-         }
-        }
-
-
-        currentTime = time(NULL);
-        strftime(currentTimeString, SIZE_OF_TIME_STRING, "%d-%m-%Y_%H-%M-%S", localtime(&currentTime));
-
-        //Création du répertoire
-        if( time(NULL) - temps > 60 || first_rec)
-        {
-    		currentTime = time(NULL);
-    		temps = currentTime;
-    		//strftime(subDir_name, SIZE_OF_TIME_STRING, "dest/%d-%m-%Y_%H-%M", localtime(&currentTime));
-    		strcpy(subDir_name, "dest/");
-    		strcat(subDir_name, currentTimeString);
-
-    		umask(0);
-    		const int dir = mkdir(subDir_name, S_IRWXU | S_IRWXG | S_IRWXO);
-    		first_rec = false;
-
-        }
-
-
-        char *imageName = (char *) malloc((strlen("dest/") + strlen(subDir_name) + strlen(currentTimeString) + strlen("/") + strlen(ext_nom) + strlen(".jpg")) * sizeof(char));
-
-        sprintf(ext_nom, "-%d", image_id);
-        strcpy(imageName, subDir_name);
-        strcat(imageName, "/");
-        strcat(imageName, currentTimeString);
-        strcat(imageName, ext_nom);
-        strcat(imageName, ".jpg");
-
-        //On estime que la réception ne dépassera pas 30 fps
-        if(image_id < 30)
-        	image_id++;
-        else
-        	image_id = 0;
-
-
-       Mat img2(Size(width, height), CV_8UC3, sockData);
-
-       printf("Ecriture image : %s\n", imageName);
-
-       imwrite(imageName, img2);
-       free(imageName);
-
-      img2.release();
-
+         if (setCap.newsockfd < 0)
+              error("Erreur sur accept()");
+         else
+        	 requests(&setCap);
 
      }
 
-     close(sock[1]);
-     close(sock[0]);
+
+     close(setCap.sockfd);
+     close(setCap.newsockfd);
 
      return 0;
 }

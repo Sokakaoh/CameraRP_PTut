@@ -12,21 +12,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <iostream>
+#include <opencv2/video/background_segm.hpp>
 
 #include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+#include "opencv2/imgproc.hpp"
+#include "opencv2/videoio/videoio.hpp"
+
 #include <opencv2/videoio.hpp>
+#include <opencv2/highgui.hpp>
 #include <opencv2/video.hpp>
 
 #define DEFAULT_WIDTH 640
@@ -47,12 +48,22 @@ using namespace std;
 
 struct Conf
 {
-	unsigned int width;
-	unsigned int height;
+	unsigned int width = DEFAULT_WIDTH;
+	unsigned int height = DEFAULT_HEIGHT;
 	int sock;
+	int comp_method = 3;// par défaut comparaison par pixels
 
 };
 
+/**
+ * Structure pour la méthode BGS (Background Substraction)
+ */
+
+struct Conf_bgs
+{
+	Mat maskMOG2;
+	Ptr<BackgroundSubtractorMOG2> MOG2;
+};
 
 void error(const char *msg);
 
@@ -63,6 +74,14 @@ Conf* menu(Conf*);
 void setSize(Conf*);
 
 void createSocket(int argc, char *argv[], Conf*);
+
+void sendParameters(Conf* setRP);
+
+void sendInit(Conf* setRP);
+
+void apply_bgs(Conf_bgs*);
+
+void compChoice(Conf*);
 
 
 #endif /* SRC_FUNC_HPP_ */
