@@ -9,6 +9,7 @@
 #define SRC_FUNCTIONS_HPP_
 
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -29,7 +30,7 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/video.hpp>
 #include <vector>
-
+#include <sys/time.h>
 
 #define SIZE_OF_TIME_STRING 20
 
@@ -56,6 +57,7 @@ struct captureConf
 
 using namespace cv;
 using namespace std;
+
 
 void create_socket(int argc, char *argv[], captureConf*);
 

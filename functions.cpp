@@ -70,11 +70,17 @@ void receiveImage(captureConf* setCap) {
 	//Déclarations variables
 
 	time_t currentTime;
+
+	//Récupération du temps en millisecondes
+	struct timeval tps;
+	gettimeofday(&tps, NULL);
+	long long debut = (long long) tps.tv_sec * 1000L + tps.tv_usec / 1000;
+
+
 	char currentTimeString[SIZE_OF_TIME_STRING];
 	//char subDir_name[SIZE_OF_TIME_STRING + 4];
 	char ext_nom[4]; //char pour le compteur
 
-	setCap->temps = time(NULL);
 
 	Mat img = Mat::zeros(setCap->height, setCap->width, CV_8UC3);
 	int imgSize = img.total() * img.elemSize();
@@ -137,6 +143,13 @@ void receiveImage(captureConf* setCap) {
 
 	img.release();
 	img2.release();
+
+	setCap->temps = time(NULL);
+	gettimeofday(&tps, NULL);
+	long long fin = (long long) tps.tv_sec * 1000L + tps.tv_usec / 1000;
+
+	cout << 1000 / (fin - debut) << " FPS" << endl;
+
 }
 
 void error(const char *msg) {

@@ -30,6 +30,11 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/video.hpp>
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <csignal>
+#include <cstdlib>
+
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
 

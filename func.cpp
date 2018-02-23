@@ -97,11 +97,11 @@ void compChoice(Conf* setRP)
 			menu(setRP);
 			break;
 		case 2 :
-			setRP->comp_method = 1;
+			setRP->comp_method = 2;
 			menu(setRP);
 			break;
 		case 3 :
-			setRP->comp_method = 1;
+			setRP->comp_method = 3;
 			menu(setRP);
 			break;
 		case 4 :
@@ -182,18 +182,15 @@ Mat compare_contours(Mat image, Mat image2)
   vector<vector<Point> > contours;
   vector<Vec4i> hierarchy;
 
-  Mat src;
-  Mat src_gray;
-  Mat src2;
-  Mat src2_gray;
   int thresh = 30;
 
-  /// Detect edges using canny
-  Canny( image, canny_output, thresh, thresh*2, 3 );
-  /// Find contours
+  /// Détection de bords avec filtre de Canny
+
+  Canny( image, canny_output, thresh, thresh*2, 3 );// tresh*3
+  /// Détection de contours
   findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
-  /// Draw contours
+  /// On dessine les contours
   Mat drawing = Mat::zeros( canny_output.size(), CV_8UC1 );
   Mat drawing2 = Mat::zeros( canny_output.size(), CV_8UC1 );
   for( unsigned int i = 0; i< contours.size(); i++ )
@@ -202,25 +199,22 @@ Mat compare_contours(Mat image, Mat image2)
        drawContours( drawing, contours, i, color, 2, 8, hierarchy, 0, Point() );
      }
 
-  /// Detect edges using canny
+  /// On fait la même chose pour la deuxième image
   Canny( image2, canny_output, thresh, thresh*2, 3 );
-  /// Find contours
+
   findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
-  /// Draw contours
+
   for( unsigned int i = 0; i< contours.size(); i++ )
      {
        Scalar color = Scalar( 255, 255, 255 );
        drawContours( drawing2, contours, i, color, 2, 8, hierarchy, 0, Point() );
      }
 
-  /// Show in a window
+  /// On soustrait les deux images pour avoir les différences
   Mat diff;
   compare(drawing, drawing2, diff, cv::CMP_EQ);
 
-  //printf("Pourcentage différences : %d\n", 100-(countNonZero(diff)*100 / (diff.cols*diff.rows)) );
-  //namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
-  //imshow( "Contours", diff );
 
   return diff;
 }

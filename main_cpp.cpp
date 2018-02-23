@@ -10,10 +10,7 @@
 
 #include "func.hpp"
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <csignal>
-#include <cstdlib>
+
 
 bool continuer = true;
 
@@ -75,7 +72,7 @@ int main(int argc, char *argv[])
     		{
     			case 1 :
     				compare(gray, gray2, diff, CMP_EQ);
-    				tauxDiff = 100 - (countNonZero(diff)*100 /  diff.total()) > 25;
+    				tauxDiff = 100 - (countNonZero(diff)*100 /  diff.total()) > 35;
     				break;
     			case 2 :
     				diff = compare_contours(gray, gray2);
@@ -88,7 +85,6 @@ int main(int argc, char *argv[])
 
     		}
 
-    		cout << 100 - ( (diff.total()*diff.elemSize() - countNonZero(diff))*100 /  diff.total()*diff.elemSize()) <<endl;
 			if(tauxDiff)
 			{
 				if( send(setRP.sock, &img_req, sizeof(int), 0) < 0)
