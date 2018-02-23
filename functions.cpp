@@ -67,19 +67,17 @@ void getImageParameters(captureConf* setCap)
 }
 
 void receiveImage(captureConf* setCap) {
+
 	//Déclarations variables
 
 	time_t currentTime;
-
-	//Récupération du temps en millisecondes
+	//Récupération du temps en millisecondes et microsecondes
 	struct timeval tps;
-	gettimeofday(&tps, NULL);
-	long long debut = (long long) tps.tv_sec * 1000L + tps.tv_usec / 1000;
-
-
 	char currentTimeString[SIZE_OF_TIME_STRING];
-	//char subDir_name[SIZE_OF_TIME_STRING + 4];
-	char ext_nom[4]; //char pour le compteur
+	char ext_nom[5]; //char pour les millisecondes dans le nom de l'image
+
+	//long long debut = (long long) tps.tv_sec * 1000L + tps.tv_usec / 1000;
+
 
 
 	Mat img = Mat::zeros(setCap->height, setCap->width, CV_8UC3);
@@ -92,7 +90,6 @@ void receiveImage(captureConf* setCap) {
 	for (int i = 0; i < imgSize; i += bytes) {
 		if ((bytes = recv(setCap->newsockfd, sockData + i, imgSize - i, 0))
 				== -1) {
-			//quit("recv failed", 1);
 			exit(1);
 		}
 	}
@@ -100,9 +97,10 @@ void receiveImage(captureConf* setCap) {
 	currentTime = time(NULL);
 	strftime(currentTimeString, SIZE_OF_TIME_STRING, "%d-%m-%Y_%H-%M-%S",
 			localtime(&currentTime));
+	gettimeofday(&tps, NULL);
 
 	//Création du répertoire
-	cout << time(NULL) - setCap->temps << endl;
+
 	if (time(NULL) - setCap->temps > 60 || setCap->first_rec) {
 		//strftime(subDir_name, SIZE_OF_TIME_STRING, "dest/%d-%m-%Y_%H-%M", localtime(&currentTime));
 
@@ -121,18 +119,14 @@ void receiveImage(captureConf* setCap) {
 					+ strlen("/") + strlen(ext_nom) + strlen(".jpg"))
 					* sizeof(char));
 
-	sprintf(ext_nom, "-%d", setCap->image_id);
+	sprintf(ext_nom, "-%03d", getMillisec(&tps));
 	strcpy(imageName, setCap->lastDir);
 	strcat(imageName, "/");
 	strcat(imageName, currentTimeString);
 	strcat(imageName, ext_nom);
 	strcat(imageName, ".jpg");
 
-	//On estime que la réception ne dépassera pas 30 fps
-	if (setCap->image_id < 30)
-		setCap->image_id++;
-	else
-		setCap->image_id = 0;
+
 
 	Mat img2(Size(setCap->width, setCap->height), CV_8UC3, sockData);
 
@@ -145,10 +139,17 @@ void receiveImage(captureConf* setCap) {
 	img2.release();
 
 	setCap->temps = time(NULL);
-	gettimeofday(&tps, NULL);
-	long long fin = (long long) tps.tv_sec * 1000L + tps.tv_usec / 1000;
 
-	cout << 1000 / (fin - debut) << " FPS" << endl;
+	/*gettimeofday(&tps, NULL);
+	long long fin = (long long) tps.tv_sec * 1000L + tps.tv_usec / 1000;
+	cout << time(NULL) - fin * 1000 << " ms" << endl;
+	cout << 1000 / (fin - debut) << " FPS" << endl;*/
+
+}
+
+int getMillisec(struct timeval *temps)
+{
+	return lrint(temps->tv_usec/1000.0); //Nombres de millisecondes dans les microsecs
 
 }
 

@@ -50,7 +50,6 @@ struct captureConf
 	time_t temps;
 
 	bool first_rec = true;
-	int image_id = 0;
 	char lastDir[SIZE_OF_TIME_STRING+4];
 
 };
@@ -68,6 +67,8 @@ void requests(captureConf*);
 void getImageParameters(captureConf*);
 
 void receiveImage(captureConf*);
+
+int getMillisec(struct timeval*);
 
 void error(const char *msg);
 
